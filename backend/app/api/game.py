@@ -43,3 +43,36 @@ def submit_score(score: int, db: Session = Depends(get_db), current_user: User =
     db.add(new_score)
     db.commit()
     return {"message": "Score enregistré"}
+
+
+
+    @router.get("/leaderboard")
+    def get_leaderboard(db: Session = Depends(get_db)):
+        """
+        Génère le classement des joueurs pour le Wall of Fame.
+        """
+        query = text("""
+            WITH MaxScores AS (
+                SELECT login_id, MAX(score) as best_score
+                FROM Scores
+                GROUP BY login_id
+            )
+            SELECT
+                u.pseudo,
+                ms.best_score,
+                DENSE_RANK() OVER (ORDER BY ms.best_score DESC) as rank
+            FROM MaxScores ms
+            JOIN Users u ON ms.login_id = u.id
+            ORDER BY rank ASC;
+        """)
+
+        result = db.execute(query).fetchall()
+
+        return [
+            {
+                "rank": row.rank,
+                "pseudo": row.pseudo,
+                "score": row.best_score
+            }
+            for row in result
+        ]
