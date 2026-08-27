@@ -3,7 +3,7 @@ export type LetterStatus = 'correct' | 'present' | 'absent' | 'empty';
 
 export const evaluateGuess = (guess: string, solution: string): LetterStatus[] => {
     const result: LetterStatus[] = Array(guess.length).fill('absent');
-    const solutionChars = solution.split('');
+    const solutionChars: (string | null)[] = solution.split('');
 
     // Passe 1 : Lettres bien placées
     for (let i = 0; i < guess.length; i++) {

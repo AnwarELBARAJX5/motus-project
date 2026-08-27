@@ -1,8 +1,7 @@
 // src/components/Grid.tsx
 import React from 'react';
 import { Cell } from './Cell';
-import { LetterStatus } from '../services/gameLogic';
-
+import type { LetterStatus } from '../services/gameLogic';
 interface GridProps {
     guesses: string[];
     currentGuess: string;
@@ -13,7 +12,11 @@ interface GridProps {
 export const Grid: React.FC<GridProps> = ({ guesses, currentGuess, solution, evaluations }) => {
     const MAX_ATTEMPTS = 6;
     const WORD_LENGTH = solution.length;
-    const empties = Array.from(Array(MAX_ATTEMPTS - 1 - guesses.length));
+    // La ligne de saisie n'est affichée que tant qu'il reste des essais
+    const showCurrentRow = guesses.length < MAX_ATTEMPTS;
+    // Nombre de lignes vides restantes (jamais négatif, sinon Array() lève un RangeError)
+    const emptyRowCount = Math.max(0, MAX_ATTEMPTS - guesses.length - (showCurrentRow ? 1 : 0));
+    const empties = Array.from(Array(emptyRowCount));
 
     return (
         <div className="grid gap-2">
@@ -25,7 +28,7 @@ export const Grid: React.FC<GridProps> = ({ guesses, currentGuess, solution, eva
                 </div>
             ))}
 
-            {guesses.length < MAX_ATTEMPTS && (
+            {showCurrentRow && (
                 <div className="flex gap-2">
                     {Array.from(Array(WORD_LENGTH)).map((_, i) => {
                         // Affichage de la première lettre par défaut[cite: 3]

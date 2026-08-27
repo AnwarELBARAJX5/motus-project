@@ -1,7 +1,6 @@
 // src/components/Cell.tsx
 import React from 'react';
-import { LetterStatus } from '../services/gameLogic';
-
+import type { LetterStatus } from '../services/gameLogic';
 interface CellProps {
     value: string;
     status: LetterStatus;

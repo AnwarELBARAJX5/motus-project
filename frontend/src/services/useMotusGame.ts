@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { LetterStatus, evaluateGuess } from './gameLogic';
+import { evaluateGuess, type LetterStatus } from './gameLogic';
 
 interface GameState {
     solution: string;
@@ -9,7 +9,11 @@ interface GameState {
     status: 'playing' | 'won' | 'lost' | 'loading';
 }
 
-export const useMotusGame = (wordLength: number = 6) => {
+export const useMotusGame = (
+    wordLength: number = 6,
+    onAuthError?: () => void,
+    onScoreSubmitted?: () => void
+) => {
     const [gameState, setGameState] = useState<GameState>({
         solution: '',
         guesses: [],
@@ -28,14 +32,27 @@ export const useMotusGame = (wordLength: number = 6) => {
             const response = await fetch(`${API_URL}/api/game/generate-word/${wordLength}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+
+            // Token absent, invalide ou expiré : on repasse par l'écran de connexion
+            if (response.status === 401) {
+                onAuthError?.();
+                return;
+            }
             if (!response.ok) throw new Error('Erreur de génération');
 
             const data = await response.json();
-            setGameState(prev => ({ ...prev, solution: data.word, status: 'playing' }));
+            // Réinitialisation complète : permet aussi de "Rejouer" une nouvelle partie
+            setGameState({
+                solution: data.word,
+                guesses: [],
+                currentGuess: '',
+                evaluations: [],
+                status: 'playing'
+            });
         } catch (error) {
             console.error('Échec de la connexion API');
         }
-    }, [wordLength, API_URL]);
+    }, [wordLength, API_URL, onAuthError]);
 
     useEffect(() => {
         initGame();
@@ -43,10 +60,17 @@ export const useMotusGame = (wordLength: number = 6) => {
 
     const submitFinalScore = async (score: number) => {
         const token = localStorage.getItem('access_token');
-        await fetch(`${API_URL}/api/game/submit-score?score=${score}`, {
+        const response = await fetch(`${API_URL}/api/game/submit-score?score=${score}`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` }
         });
+        // Token expiré : on repasse par l'écran de connexion
+        if (response.status === 401) {
+            onAuthError?.();
+            return;
+        }
+        // Prévient le parent (ex: pour rafraîchir le classement)
+        onScoreSubmitted?.();
     };
 
     // Gestion des frappes clavier
