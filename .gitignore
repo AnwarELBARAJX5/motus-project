@@ -1,0 +1,22 @@
+# Variables d'environnement (secrets) - utiliser .env.example comme modèle
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+
+# IDE / éditeurs
+.idea/
+.vscode/
+
+# Système
+.DS_Store
+Thumbs.db
